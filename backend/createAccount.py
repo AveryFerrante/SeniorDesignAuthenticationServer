@@ -33,7 +33,7 @@ def application(environ, start_response):
 
 	db_pass_file = open('/var/www/default.conf')
 	db_pass = db_pass_file.readlines()
-	db = MySQLdb.connect(host = "localhost", user = "server", passwd = str(db_pass[0].rstrip()), db = "TwoFactorAuthentication")
+	db = MySQLdb.connect(host = "localhost", user = "server", passwd = str(db_pass[0].rstrip()), db = "AuthenticationServer")
 	cur = db.cursor()
 
 	try:
