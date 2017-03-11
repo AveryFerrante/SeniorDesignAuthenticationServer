@@ -4,9 +4,6 @@ from cgi import parse_qs, escape
 
 
 
-def saveAndRespond(session, start_response):
-	session.save()
-	start_response('200 OK', [('Content-type', 'text/plain')])
 
 def getPostParams(environ):
 	try:
@@ -17,55 +14,62 @@ def getPostParams(environ):
 
 	return parse_qs(request_body)
 
+def checkUsernamePassword(username, password):
+	db_pass_file = open('/var/www/default.conf')
+	db_pass = db_pass_file.readlines()
+	db = MySQLdb.connect(host = "localhost", user = "server", passwd = str(db_pass[0].rstrip()), db = "AuthenticationServer")
+	cur = db.cursor()
+
+	# Fetch associated password salt and append to entered password
+	cur.execute("SELECT pass_salt FROM Users WHERE user_name=%s", (username,))
+	for row in cur.fetchall():
+		password += row[0]
+
+	# Hash the password and the added salt
+	hasher = hashlib.sha512()
+	hasher.update(password)
+
+	# Determine if the user entered correct credentials
+	cur.execute("SELECT * FROM Users WHERE user_name=%s AND password=%s", (username, hasher.hexdigest()))
+	if not cur.fetchone():
+		db.close()
+		return True
+	else:
+		db.close()
+		return False
+
+
 
 def simple_app(environ, start_response):
-	# Get the passed parameters
-	parameters = getPostParams(environ)
 	# Get the session object from the environ
 	session = environ['beaker.session']
 
+
 	if 'logged_in' in session and session['logged_in'] is True:
-		resp = "Granted"
+		returningResponse = "Granted"
 	else:
 		# Get the arguments passed from the API call
 		try:
+			parameters = getPostParams(environ)
 			username = str(escape(parameters['username'][0]))
 			password = str(escape(parameters['password'][0]))
 		except:
-			saveAndRespond(session, start_response)
+			session.save()
+			start_response('200 OK', [('Content-type', 'text/plain')])
 			return "MissingArgument"
 
-		db_pass_file = open('/var/www/default.conf')
-		db_pass = db_pass_file.readlines()
-		db = MySQLdb.connect(host = "localhost", user = "server", passwd = str(db_pass[0].rstrip()), db = "AuthenticationServer")
-		cur = db.cursor()
 
-		# Fetch associated password salt and append to entered password
-		cur.execute("SELECT pass_salt FROM Users WHERE user_name=%s", (username,))
-		for row in cur.fetchall():
-			password += row[0]
+			if checkUsernamePassword(username, password):
+				returningResponse = "Granted"
+				session['logged_in'] = True
+			else:
+				returningResponse = "NotFound"
+				session['logged_in'] = False
 
-		# Hash the password and the added salt
-		hasher = hashlib.sha512()
-		hasher.update(password)
-
-		# Determine if the user entered correct credentials
-		cur.execute("SELECT * FROM Users WHERE user_name=%s AND password=%s", (username, hasher.hexdigest()))
-		if not cur.fetchone():
-			resp = "NotFound"
-		else:
-			resp = "Granted"
-
-		db.close()
-
-		if resp is "Granted":
-			session['logged_in'] = True
-		else:
-			session['logged_in'] = False
 
 	session.save()
 	start_response('200 OK', [('Content-type', 'text/plain')])
-	return [resp]
+	return returningResponse
 
 
 # Configure the SessionMiddleware

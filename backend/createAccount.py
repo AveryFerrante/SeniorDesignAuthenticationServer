@@ -21,9 +21,10 @@ def application(environ, start_response):
 	try:
 		username = escape(parameters['username'][0])
 		password = escape(parameters['password'][0])
+		imageNumber = int(escape(parameters['imageNumber'][0]))
 	except:
 		start_response('200 OK', [('Content-type', 'text/plain')])
-		return "Error"
+		return "ArgumentsError"
 
 	salt = generateSalt()
 
@@ -37,12 +38,12 @@ def application(environ, start_response):
 	cur = db.cursor()
 
 	try:
-		cur.execute("INSERT INTO Users(user_name, password, pass_salt) VALUES(%s, %s, %s);", (username, hashedword, salt))
+		cur.execute("INSERT INTO Users(user_name, password, pass_salt, image_number) VALUES(%s, %s, %s, %s);", (username, hashedword, salt, imageNumber))
 		db.commit()
 		response = "Success"
 	except:
 		db.rollback()
-		response = "Error"
+		response = "UsernameError"
 
 	db.close()
 
