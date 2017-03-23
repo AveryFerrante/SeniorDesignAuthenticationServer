@@ -44,6 +44,7 @@ def simple_app(environ, start_response):
 	# Get the session object from the environ
 	session = environ['beaker.session']
 
+	returningResponse = "DefaultResponse"
 
 	if 'logged_in' in session and session['logged_in'] is True:
 		returningResponse = "Granted"
