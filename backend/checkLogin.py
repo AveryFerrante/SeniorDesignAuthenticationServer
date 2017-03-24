@@ -74,20 +74,22 @@ def simple_app(environ, start_response):
 			parameters = getPostParams(environ)
 			username = str(escape(parameters['username'][0]))
 			password = str(escape(parameters['password'][0]))
+
+			user_id = checkUsernamePassword(username, password)
+			if user_id:
+				# Insert session section into database
+				session_string = createSession(user_id)
+				session['logged_in'] = True
+				session['session_string'] = session_string
+				returningResponse = "Granted"
+			else:
+				session['logged_in'] = False
+				returningResponse = "NotFound"
 		except:
 			returningResponse = "MissingArgument"
 
 
-		user_id = checkUsernamePassword(username, password)
-		if user_id:
-			# Insert session section into database
-			session_string = createSession(user_id)
-			session['logged_in'] = True
-			session['session_string'] = session_string
-			returningResponse = "Granted"
-		else:
-			session['logged_in'] = False
-			returningResponse = "NotFound"
+
 
 	session.save()
 	start_response('200 OK', [('Content-type', 'text/plain')])
