@@ -13,7 +13,7 @@ def getImageNumber(session_id):
 		cur.execute("SELECT image_number FROM Users WHERE user_id = %s", (user_id,))
 		image_number = cur.fetchone()[0]
 
-		return "<img src=\"images/" + str(image_number) + ".jpg\">"
+		return "images/" + str(image_number) + ".jpg>"
 	except:
 		return "<strong>FUCKED UP!</strong>"
 
