@@ -1,6 +1,6 @@
 from beaker.middleware import SessionMiddleware
 from cgi import parse_qs, escape
-
+import datetime
 
 
 def simple_app(environ, start_response):
@@ -9,6 +9,7 @@ def simple_app(environ, start_response):
 
 
 	if 'logged_in' in session and session['logged_in'] is True:
+		# Get Session_id and check against the database (can get the user_id associated to get the image # to return to the user)
 		returningResponse = "Granted"
 	else:
         returningResponse = "NoSessionCookie"
@@ -19,12 +20,12 @@ def simple_app(environ, start_response):
 
 
 # Configure the SessionMiddleware
-validate_key_file = open('/var/www/default.conf')
-validate_key = validate_key_file.readlines()
+configuration_file = open('/var/www/default.conf')
+configuration_data = configuration_file.readlines()
 session_opts = {
     'session.type': 'cookie', # All data is stored in a cookie on the client side (cannot exceed 4096 bytes)
     'auto': True,
-    'session.cookie_expires': 60,
-    'session.validate_key': str(validate_key[1].rstrip())
+    'session.cookie_expires': int(configuration_data[2].rstrip()),
+    'session.validate_key': str(configuration_data[1].rstrip())
 }
 application = SessionMiddleware(simple_app, session_opts)

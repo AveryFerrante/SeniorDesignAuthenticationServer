@@ -1,9 +1,10 @@
-import MySQLdb, hashlib
+import MySQLdb, hashlib, string, random, datetime
 from beaker.middleware import SessionMiddleware
 from cgi import parse_qs, escape
 
 
-
+def generateString(size=20, chars=string.ascii_letters + string.digits):
+	return ''.join(random.choice(chars) for _ in range(size))
 
 def getPostParams(environ):
 	try:
@@ -30,13 +31,32 @@ def checkUsernamePassword(username, password):
 	hasher.update(password)
 
 	# Determine if the user entered correct credentials
-	cur.execute("SELECT * FROM Users WHERE user_name=%s AND password=%s", (username, hasher.hexdigest()))
-	if not cur.fetchone():
-		db.close()
-		return False
-	else:
-		db.close()
-		return True
+	cur.execute("SELECT user_id FROM Users WHERE user_name=%s AND password=%s", (username, hasher.hexdigest()))
+	for row in cur.fetchall():
+		if not row:
+			db.close()
+			return False
+		else:
+			user_id = row[0]
+			db.close()
+			return user_id
+
+def getTimeoutTime():
+	future_time = datetime.datetime.now() + datetime.timedelta(seconds = int(configuration_data[2].rstrip()))
+	return future_time.strftime('%Y-%m-%d %H:%M:%S')
+
+def createSession(user_id):
+	db = MySQLdb.connect(host = "localhost", user = "server", passwd = str(configuration_data[0].rstrip()), db = "AuthenticationServer")
+	cur = db.cursor()
+
+	session_string = generateString()
+	active_state = 1
+	date_string = getTimeoutTime()
+	cur.execute("INSERT INTO Sessions(user_id, session_id, active, expire_time) VALUES (%s, %s, %s, %s)", (int(user_id), session_string, active_state, date_string))
+	db.commit() # Commit the insert to the database
+	db.close()
+	return session_string
+
 
 
 
@@ -58,8 +78,12 @@ def simple_app(environ, start_response):
 			returningResponse = "MissingArgument"
 
 
-		if checkUsernamePassword(username, password):
+		user_id = checkUsernamePassword(username, password)
+		if user_id:
+			# Insert session section into database
+			session_string = createSession(user_id)
 			session['logged_in'] = True
+			session['session_string'] = session_string
 			returningResponse = "Granted"
 		else:
 			session['logged_in'] = False
@@ -71,12 +95,12 @@ def simple_app(environ, start_response):
 
 
 # Configure the SessionMiddleware
-validate_key_file = open('/var/www/default.conf')
-validate_key = validate_key_file.readlines()
+configuration_file = open('/var/www/default.conf')
+configuration_data = configuration_file.readlines()
 session_opts = {
     'session.type': 'cookie', # All data is stored in a cookie on the client side (cannot exceed 4096 bytes)
     'auto': True,
-    'session.cookie_expires': 60,
-    'session.validate_key': str(validate_key[1].rstrip())
+    'session.cookie_expires': int(configuration_data[2].rstrip()),
+    'session.validate_key': str(configuration_data[1].rstrip())
 }
 application = SessionMiddleware(simple_app, session_opts)

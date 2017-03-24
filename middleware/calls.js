@@ -35,22 +35,22 @@ $( document ).ready(function() {
   });
 
   $( "#loginButton" ).click(function() {
-    var uname = $( "#usernameInput" ).val().trim();
-    var pword = $( "#passwordInput" ).val().trim();
+    var inputs = getUsernameAndPass();
 
-    if(!uname || !pword) {
+    if(!inputs[0] || !inputs[1]) {
       alert("Must enter a password & username");
     }
     else {
 
-      $.post( "login/", { username: uname, password: pword }, function( data ) {
-        data = data.trim();
-        alert( data );
+      $.post( "login/", { username: inputs[0], password: inputs[1] }, function( data ) {
         if( data.trim() === "Granted" ) {
             alert( "Successfully Logged In" );
         }
-        else { // Error attempting to sign up
-          alert("There was an error logging in");
+        else if( data.trim() === "MissingArgument" ){ // Error attempting to sign in
+          alert("Missing Argument: Username or Password");
+        }
+        else { // Only other response possible is "NotFound"
+          alert("No matching credentials")
         }
       });
 
