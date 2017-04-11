@@ -1,7 +1,18 @@
 import MySQLdb
 from beaker.middleware import SessionMiddleware
+from cgi import parse_qs, escape
 
-def getImageNumber(session_id):
+
+def getPostParams(environ):
+	try:
+		request_body_size = int(environ['CONTENT_LENGTH'])
+		request_body = str(environ['wsgi.input'].read(request_body_size))
+	except (TypeError, ValueError):
+		request_body = "0"
+
+	return parse_qs(request_body)
+
+def getUserPhrase(session_id):
 	try:
 		db = MySQLdb.connect(host = "localhost", user = "server", passwd = str(configuration_data[0].rstrip()), db = "AuthenticationServer")
 		cur = db.cursor()
@@ -10,12 +21,26 @@ def getImageNumber(session_id):
 		result = cur.fetchone()
 		user_id = result[1]
 
-		cur.execute("SELECT image_number FROM Users WHERE user_id = %s", (user_id,))
-		image_number = cur.fetchone()[0]
+		cur.execute("SELECT secure_phrase FROM Users WHERE user_id = %s", (user_id,))
+		phrase = cur.fetchone()[0]
 
-		return "images/" + str(image_number) + ".jpg"
+		return phrase
 	except:
 		return "<strong>FUCKED UP!</strong>"
+
+def setActiveCode(code):
+	try:
+		db = MySQLdb.connect(host = "localhost", user = "server", passwd = str(configuration_data[0].rstrip()), db = "AuthenticationServer")
+		cur = db.cursor()
+
+		cur.execute("UPDATE ActiveCodes SET active = 1 WHERE session_id = %s", (code,))
+		db.commit()
+		db.close()
+		return 1
+	except:
+		return 0
+
+
 
 def simple_app(environ, start_response):
 	# Get the session object from the environ
@@ -24,7 +49,15 @@ def simple_app(environ, start_response):
 
 	if 'logged_in' in session and session['logged_in'] is True:
 		# Get Session_id and check against the database (can get the user_id associated to get the image # to return to the user)
-		returningResponse = getImageNumber(session['session_string'])
+		try:
+			parameters = getPostParams(environ)
+			code = str(escape(parameters['qrCode'][0]))
+			if setActiveCode(code) is 1:
+				returningResponse = getUserPhrase(session['session_string'])
+			else:
+				returningResponse = "InvalidScannedCode"
+		except:
+			returningResponse = "NoScannedCode"
 	else:
 		returningResponse = "NoSessionCookie"
 

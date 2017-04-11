@@ -41,9 +41,6 @@ def checkUsernamePassword(username, password):
 			db.close()
 			return user_id
 
-def getTimeoutTime():
-	future_time = datetime.datetime.now() + datetime.timedelta(seconds = int(configuration_data[2].rstrip()))
-	return future_time.strftime('%Y-%m-%d %H:%M:%S')
 
 def createSession(user_id):
 	db = MySQLdb.connect(host = "localhost", user = "server", passwd = str(configuration_data[0].rstrip()), db = "AuthenticationServer")
@@ -51,8 +48,7 @@ def createSession(user_id):
 
 	session_string = generateString()
 	active_state = 1
-	date_string = getTimeoutTime()
-	cur.execute("INSERT INTO Sessions(user_id, session_id, active, expire_time) VALUES (%s, %s, %s, %s)", (int(user_id), session_string, active_state, date_string))
+	cur.execute("INSERT INTO Sessions(user_id, session_id, active) VALUES (%s, %s, %s)", (int(user_id), session_string, active_state))
 	db.commit() # Commit the insert to the database
 	db.close()
 	return session_string
