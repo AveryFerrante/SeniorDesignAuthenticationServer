@@ -1,0 +1,31 @@
+<html>
+  <head>
+    <title>README</title>
+  </head>
+
+
+  <body>
+    <h2>QR Code</h2>
+    <p>QR code is now dynamic every load session and saved back end for up to 5 minutes before expiring. Each QR code is a unique 20 character string containing letters and numbers.<br>
+      More information may be added to this QR code in the future, but for now, you should save this string, as it is required in future processing.</p><br><br><br>
+
+    <h2>Creating an Account</h2>
+    <p>Account creation now requires a username, password, and a passphrase. An account can be created by clicking on the QR Code from the homescreen or by visiting <br>
+      <a href="http://54.213.49.145/signup.html">http://54.213.49.145/signup.html</a></p><br><br><br>
+
+    <h2>Logging in</h2>
+    <p>To login, a POST request must be sent to login/ endpoint. The request must contain username and password and sent as the variables 'username' and 'password'<br>
+      respectively. If the login is successful, a 'Granted' message is returned as well as a cookie that is to be saved on the device. Other possible responses are <br>
+      'NotFound' and 'MissingArgument' respectively.</p><br><br><br>
+
+    <h2>"Validating" a Session</h2>
+    <p>Now, once the user scans the code on the phone, a POST request should be sent to qrScan/ endpoint. The request must send the cookie that has been saved from logging<br>
+      in as well as the scanned code from the QR code. This code should be sent using the parameter name 'qrCode'. If everything validates correctly, you should receive<br>
+      back the passphrase created when making the account. There is functionality to test this on the site right now. If you type in the scanned QR code into the correct box<br>
+      and press login the server will alert with responses (ultimately you are wanting to see the passphrase you created with the account). For reasons, you may have to click<br>
+      login a few times before the correct response will show in the dialog boxes. An example looks like this: Type in username, password, and scanned QR code and press login<br>
+      button 2 - 3 times, reading the messagse that come from the server each time. This should allow you to "test" certain aspects. Downloading a 3rd party QR scanner can help<br>
+      to display the QR code on your phone so you can type it into the computer easier.</p><br>
+
+  </body>
+</html>

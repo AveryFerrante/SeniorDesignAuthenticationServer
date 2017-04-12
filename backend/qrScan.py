@@ -33,7 +33,7 @@ def setActiveCode(code):
 		db = MySQLdb.connect(host = "localhost", user = "server", passwd = str(configuration_data[0].rstrip()), db = "AuthenticationServer")
 		cur = db.cursor()
 
-		cur.execute("UPDATE ActiveCodes SET active = 1 WHERE session_id = %s", (code,))
+		cur.execute("UPDATE ActiveCodes SET active = 1 WHERE session_id = %s AND expire_time > NOW() AND expire_time < NOW() + INTERVAL 5 MINUTE AND active = NULL", (code,))
 		db.commit()
 		db.close()
 		return 1
