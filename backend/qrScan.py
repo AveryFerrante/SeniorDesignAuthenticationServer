@@ -29,16 +29,14 @@ def getUserPhrase(session_id):
 		return "<strong>FUCKED UP!</strong>"
 
 def setActiveCode(code):
-	try:
-		db = MySQLdb.connect(host = "localhost", user = "server", passwd = str(configuration_data[0].rstrip()), db = "AuthenticationServer")
-		cur = db.cursor()
+	db = MySQLdb.connect(host = "localhost", user = "server", passwd = str(configuration_data[0].rstrip()), db = "AuthenticationServer")
+	cur = db.cursor()
 
-		cur.execute("UPDATE ActiveCodes SET active = 1 WHERE session_id = %s AND expire_time > NOW() AND expire_time < NOW() + INTERVAL 5 MINUTE AND active = NULL", (code,))
-		db.commit()
-		db.close()
-		return 1
-	except:
-		return 0
+	effected = cur.execute("UPDATE ActiveCodes SET active = 1 WHERE session_id = %s AND expire_time > NOW() AND expire_time < NOW() + INTERVAL 5 MINUTE AND active IS NULL", (code,))
+	db.commit()
+	db.close()
+	# If nothing matches the query string, effected is 0 (# of rows effected), else, should be 1 (1 row effected)
+	return int(effected)
 
 
 

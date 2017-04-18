@@ -53,7 +53,22 @@ def createSession(user_id):
 	db.close()
 	return session_string
 
+def getUserIdFromSessionId(session_id):
+	db = MySQLdb.connect(host = "localhost", user = "server", passwd = str(configuration_data[0].rstrip()), db = "AuthenticationServer")
+	cur = db.cursor()
 
+	cur.execute("SELECT user_id FROM Sessions WHERE session_id = %s", (session_id,))
+	user_id = cur.fetchone()
+	return user_id
+
+def comparePinNumber(user_id, pin_number):
+	db = MySQLdb.connect(host = "localhost", user = "server", passwd = str(configuration_data[0].rstrip()), db = "AuthenticationServer")
+	cur = db.cursor()
+
+	cur.execute("SELECT pin_number FROM Users WHERE user_id = %s", (user_id,))
+	pin = cur.fetchone()
+	pin = int(pin[0])
+	return int(pin) == int(pin_number)
 
 
 def simple_app(environ, start_response):
@@ -63,7 +78,23 @@ def simple_app(environ, start_response):
 
 
 	if 'logged_in' in session and session['logged_in'] is True:
-		returningResponse = "Granted"
+		# Get user_id associated with the session_id from the cookie
+		# Check this use_id against the one associated with the PIN number entered
+		try:
+			parameters = getPostParams(environ)
+			pin = int(escape(parameters['pin'][0]))
+
+			user_id = getUserIdFromSessionId(session['session_string'])
+			if user_id:
+				if comparePinNumber(int(user_id[0]), pin):
+					returningResponse = "Granted"
+				else:
+					returningResponse = "InvalidPin"
+			else:
+				returningResponse = "InvalidSession"
+		except:
+			returningResponse = "MissingArgument"
+
 	else:
 		# Get the arguments passed from the API call
 		try:

@@ -21,7 +21,8 @@ def application(environ, start_response):
 	try:
 		username = escape(parameters['username'][0])
 		password = escape(parameters['password'][0])
-		userPassphrase = escape(parameters['phrase'][0])
+		pin = escape(parameters['pin'][0])
+		userPassphrase = escape(parameters['passphrase'][0])
 	except:
 		start_response('200 OK', [('Content-type', 'text/plain')])
 		return "ArgumentsError"
@@ -38,7 +39,13 @@ def application(environ, start_response):
 	cur = db.cursor()
 
 	try:
-		cur.execute("INSERT INTO Users(user_name, password, pass_salt, secure_phrase) VALUES(%s, %s, %s, %s);", (username, hashedword, salt, userPassphrase))
+		pin = int(pin)
+	except:
+		start_response('200 OK', [('Content-type', 'text/plain')])
+		return "NonNumericalPin"
+
+	try:
+		cur.execute("INSERT INTO Users(user_name, password, pass_salt, secure_phrase, pin_number) VALUES(%s, %s, %s, %s, %s);", (username, hashedword, salt, userPassphrase, pin))
 		db.commit()
 		response = "Success"
 	except:
