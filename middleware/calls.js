@@ -31,7 +31,7 @@ $( document ).ready(function() {
     else if(pinNumb.length != 4) {
       alert("PIN must be exactly 4 digits.")
     }
-    
+
     else{
       $.post( "createAccount/", { username: uname, password: pword, pin: pinNumb, passphrase: pphrase }, function( data ) {
 
@@ -51,5 +51,6 @@ $( document ).ready(function() {
       });
     }
   });
+
 
 }); // Close Document ready

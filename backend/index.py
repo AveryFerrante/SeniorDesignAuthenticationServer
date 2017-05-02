@@ -34,6 +34,8 @@ def application(environ, start_response):
               background-color: #d3d3d3;
             }
         </style>
+        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+        <script type='text/javascript' src='middleware/check.js'></script>
       </head>
 
       <body>
